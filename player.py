@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 """
 Player class
-@autor: Pawel Wisniewski
+@author: Pawel Wisniewski
 """
-import pygame,pdb
+import pygame,pdb,walls
 
 
 class Player(pygame.sprite.Sprite):
-  def __init__(self,xCoordintat,yCoordinat,image,maxSpeed,screenWidth,screenHeight):
+  def __init__(self, xCoordintat, yCoordinat, image, maxSpeed, screenWidth, screenHeight, maxClimbingSpeed=3):
     """
     Constructor sets all variables to starting state
     """
-    self.rect   = pygame.Rect(xCoordintat,yCoordinat,image.get_width(),image.get_height())
+    self.rect   = pygame.Rect(xCoordintat, yCoordinat, image.get_width(), image.get_height())
     self.image  = image
     self.xVel   = 0
     self.yVel   = 0
@@ -26,13 +26,16 @@ class Player(pygame.sprite.Sprite):
     self.jumpCounter= 0
     self.jumping    = False
     self.onGround   = False
+    self.onLadder   = False
+    self.maxClimbingSpeed = maxClimbingSpeed
 
-  def update(self,*args):
+  def update(self, *args):
     """
     Deals with jumps and stuff
     """
-    if not self.jumping and not self.onGround:
+    if not self.jumping and not self.onGround and not self.onLadder:
       self.falling = True
+    self.onLadder = False
     if self.jumpCounter > 1:
       self.yVel += 0.2
       self.jumpCounter -= 1
@@ -72,6 +75,21 @@ class Player(pygame.sprite.Sprite):
     else:
       self.xVel = (self.maxSpeed/2)
 
+  def moveUp(self):
+    if self.onLadder:
+      if self.sprinting:
+        self.yVel = -self.maxClimbingSpeed
+      else:
+        self.yVel = -(self.maxClimbingSpeed/2)
+
+  def moveDown(self):
+    if self.onLadder:
+      if self.sprinting:
+        self.yVel = self.maxClimbingSpeed
+      else:
+        self.yVel = (self.maxClimbingSpeed/2)
+
+
   def sprint(self):
     """
     Makes player sprint
@@ -89,6 +107,7 @@ class Player(pygame.sprite.Sprite):
     Stops player
     """
     self.slowing = True
+    self.yVel = 0
 
   def moveSingleAxis(self, xVel, yVel, objects):
     """
@@ -97,7 +116,7 @@ class Player(pygame.sprite.Sprite):
     self.rect.left  += xVel
     self.rect.top   += yVel
     for object in objects:
-      if self.rect.colliderect(object.rect) and (xVel or yVel):
+      if self.rect.colliderect(object.rect) and (xVel or yVel) and isinstance(object,walls.Wall):
         if yVel > 0 and self.rect.bottom > object.rect.top : #moving down hitting top
           print "pierwsza"
           print self.rect,object.rect
@@ -121,12 +140,16 @@ class Player(pygame.sprite.Sprite):
           print self.rect,object.rect
           self.rect.left = object.rect.right
           self.xVel = 0
+      if self.rect.colliderect(object.rect) and (xVel or yVel) and isinstance(object,walls.Ladder):
+        if self.rect.centerx > object.rect.centerx -10 and self.rect.centerx < object.rect.centerx + 10:
+          self.onLadder = True
 
   def jump(self):
     """
     Makes player jump
     """
     if not self.jumping:
+      self.onLadder = False
       self.onGround = False
       self.jumping = True
       self.jumpCounter = 30

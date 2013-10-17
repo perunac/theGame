@@ -2,6 +2,7 @@
 """
 Miscellaneus module
 contains support classes
+@author: Pawel Wisniewski
 """
 
 

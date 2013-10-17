@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Highest file in hierarchy
-@autor: Pawel Wisniewski
+@author: Pawel Wisniewski
 """
 
 import game
